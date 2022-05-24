@@ -1,6 +1,6 @@
 # How I met your mother script crawler
 
-## Useage
+## Usage
 ```
 npm test
 npm start
