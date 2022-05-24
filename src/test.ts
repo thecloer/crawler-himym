@@ -1,34 +1,40 @@
-import { errorTracer, FunctionError, HandledError } from './lib/error.handler';
-
-const getData = errorTracer(async function getData(str: string, i: number) {
-  if (i % 3 === 0) {
-    console.log('error!!');
-    return new FunctionError(new Error(`My Error: ${str}`));
-  } else {
-    console.log('return!!');
-    return { data: str };
-  }
-});
-
-const oneMoreFunc = errorTracer(async function oneMoreFunc(str: string, i: number) {
-  return await getData(str, i);
-});
-
-const getDataList = async (strList: string[]) => {
-  const promiseList = strList.map((str, idx) => oneMoreFunc(str, idx));
-  const result = await Promise.allSettled(promiseList);
-
-  const ful = result.filter((r) => r.status === 'fulfilled') as PromiseFulfilledResult<{ data: string } | FunctionError>[];
-  const values = ful.map((f) => f.value);
-  return values;
-};
+import { saver } from './pdf-generator/saver';
+import { getEpisodeListOnPage, getScript } from './crawler/crawler';
+import { FunctionError } from './lib/error.handler';
 
 async function test() {
-  const dummy = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구', '십'];
-  const result = await getDataList(dummy);
-
-  for (const v of result) {
-    if (v instanceof FunctionError) console.error(v);
+  const episodeList = await getEpisodeListOnPage(0);
+  if (episodeList instanceof FunctionError) {
+    console.log(episodeList.trace);
+    console.error(episodeList);
+    return null;
   }
+
+  const scriptPromiseList = episodeList.map((ep) => getScript(ep));
+  const settledScriptList = await Promise.allSettled(scriptPromiseList);
+
+  const [scriptList, errorList] = settledScriptList.reduce(
+    ([s, e], promiseResult, i) => {
+      const { title } = episodeList[i];
+      if (promiseResult.status === 'rejected') return [[...s], [...e, { title, error: promiseResult.reason }]];
+      else {
+        const { value } = promiseResult;
+        if (value instanceof FunctionError) return [[...s], [...e, { title, error: value }]];
+        else return [[...s, { title, script: value }], [...e]];
+      }
+    },
+    [[], []] as [{ title: string; script: Script }[], { title: string; error: any }[]]
+  );
+
+  if (errorList.length > 0) {
+    console.log(`=== Error List ${errorList.length}/${episodeList.length} ===`);
+    episodeList.forEach((e) => {
+      console.log(e.title);
+      e instanceof FunctionError ? console.log(e.trace) : console.log(e);
+    });
+  }
+
+  await saver(scriptList);
 }
+
 test();

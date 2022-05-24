@@ -1,4 +1,4 @@
-import saver from './pdf-generator/saver';
+import { saver } from './pdf-generator/saver';
 import { getEpisodeList, getScript } from './crawler/crawler';
 import { FunctionError } from './lib/error.handler';
 
