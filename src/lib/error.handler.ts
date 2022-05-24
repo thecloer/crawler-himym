@@ -15,14 +15,14 @@ export class FunctionError {
 
 export function errorTracer<T extends (...args: any[]) => any>(func: T) {
   if (isAsyncFunction(func)) {
-    return async (...args: Parameters<T>) => {
-      const result = (await func(...args)) as ReturnType<T> | FunctionError;
+    return async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> => {
+      const result = await func(...args);
       if (result instanceof FunctionError) result.addTrace(`in ${func.name}`);
       return result;
     };
   } else {
-    return (...args: Parameters<T>) => {
-      const result = func(...args) as ReturnType<T> | FunctionError;
+    return (...args: Parameters<T>): ReturnType<T> => {
+      const result = func(...args);
       if (result instanceof FunctionError) result.addTrace(`in ${func.name}`);
       return result;
     };

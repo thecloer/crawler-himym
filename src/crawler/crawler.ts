@@ -5,7 +5,7 @@ import { FunctionError, errorTracer } from '../lib/error.handler';
 const BASE_URL = 'https://transcripts.foreverdreaming.org';
 const GAP = 25;
 
-const getDOM = errorTracer(async function getDOM(url: Url) {
+const getDOM = errorTracer(async function getDOM(url: string) {
   try {
     const res = await axios.get(url);
     return cheerio.load(res.data);
@@ -22,13 +22,13 @@ const getDOM = errorTracer(async function getDOM(url: Url) {
   }
 });
 
-const getScript = errorTracer(async function getScript(url: Url) {
+export const getScript = errorTracer(async function getScript({ title, url }: Episode) {
   const $ = await getDOM(url);
   if ($ instanceof FunctionError) return $;
 
   const pList = $('.postbody > p');
 
-  const script: Script[] = [];
+  const script: Script = [];
   // const script = new Proxy([], {
   //   get(target, idx) {
   //     if (!isNaN(idx)) {
@@ -44,7 +44,8 @@ const getScript = errorTracer(async function getScript(url: Url) {
     if (pInnerText.includes(':')) {
       const [character, _dialogue] = pInnerText.split(':');
       const dialogue = _dialogue.trim();
-      script.push({ character, dialogue });
+      const line: Line = { character, dialogue };
+      script.push(line);
     }
     // else if (pInnerText.includes(':...')) {
     //   const [character, _] = pInnerText.split(':');
@@ -59,6 +60,8 @@ const getScript = errorTracer(async function getScript(url: Url) {
     //   script.push(line);
     // }
   });
+
+  console.log(`getScript done: ${title}`);
   return script;
 });
 
