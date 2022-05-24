@@ -1,11 +1,11 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { FunctionError, errorTracer } from '../lib/error.handler';
+import { asyncErrorTracer, FunctionError } from '../lib/error.handler';
 
 const BASE_URL = 'https://transcripts.foreverdreaming.org';
 const GAP = 25;
 
-const getDOM = errorTracer(async function getDOM(url: string) {
+const getDOM = asyncErrorTracer(async function getDOM(url: string) {
   try {
     const res = await axios.get(url);
     return cheerio.load(res.data);
@@ -22,7 +22,7 @@ const getDOM = errorTracer(async function getDOM(url: string) {
   }
 });
 
-export const getScript = errorTracer(async function getScript({ title, url }: Episode) {
+export const getScript = asyncErrorTracer(async function getScript({ title, url }: Episode) {
   const $ = await getDOM(url);
   if ($ instanceof FunctionError) return $;
 
@@ -66,7 +66,7 @@ export const getScript = errorTracer(async function getScript({ title, url }: Ep
 });
 
 // test
-export const getEpisodeListOnPage = errorTracer(async function getEpisodeListOnPage(page: number) {
+export const getEpisodeListOnPage = asyncErrorTracer(async function getEpisodeListOnPage(page: number) {
   const episodeList: Episode[] = [];
   const $ = await getDOM(`${BASE_URL}/viewforum.php?f=177&start=${GAP * page}`);
   if ($ instanceof FunctionError) return $;
@@ -82,7 +82,7 @@ export const getEpisodeListOnPage = errorTracer(async function getEpisodeListOnP
   return episodeList;
 });
 
-export const getEpisodeList = errorTracer(async function getEpisodeList(pageNum: number) {
+export const getEpisodeList = asyncErrorTracer(async function getEpisodeList(pageNum: number) {
   let episodeList: Episode[] = [];
 
   for (let page = 0; page < pageNum; page++) {
