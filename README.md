@@ -4,7 +4,31 @@ This is a program that gets scripts of all episodes of ["How I met your mother"]
 
 ## Usage
 
+generate pdf for the first episode of season 1
+
 ```
 npm test
-npm start
 ```
+
+generate pdf for all episodes
+
+```
+npm run start
+```
+
+## Structure
+
+```
+.
+├── pdf                                     # output directory
+└── src                                     #
+    ├── crawler                             # crawler
+    ├── pdf-generator                       # pdf generator
+    ├── lib                                 #
+    ├── app.ts                              # starting point
+    └── test.ts                             # test file
+```
+
+## Output example
+
+![output example](./images/output-example.png)
